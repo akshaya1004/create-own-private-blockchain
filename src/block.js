@@ -14,9 +14,6 @@ const hex2ascii = require('hex2ascii');
 
 class Block {
 
-
-
-
     // Constructor - argument data will be the object containing the transaction data
 	constructor(data){
 		this.hash = null;                                           // Hash of the block
@@ -48,9 +45,7 @@ class Block {
             // Returning the Block is not valid
             
             // Returning the Block is valid
-
             const existingHash = self.hash;
-
             self.hash = null;
             const expectedHash = SHA256(JSON.stringify(self)).toString();
             self.hash = existingHash;

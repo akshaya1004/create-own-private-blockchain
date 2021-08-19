@@ -14,6 +14,9 @@ const hex2ascii = require('hex2ascii');
 
 class Block {
 
+
+    
+
     // Constructor - argument data will be the object containing the transaction data
 	constructor(data){
 		this.hash = null;                                           // Hash of the block

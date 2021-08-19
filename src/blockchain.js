@@ -64,7 +64,26 @@ class Blockchain {
     _addBlock(block) {
         let self = this;
         return new Promise(async (resolve, reject) => {
-           
+            block.height = this.chain.length;
+            block.time =parseInt(new Date().getTime().toString().slice(0, -3));
+
+            if (this.chain.length > 0) {
+                const previousBlock = this.chain[this.chain.length - 1];
+                block.previousBlockHash = previousBlock.hash;
+            }
+
+            block.hash = SHA256(JSON.stringify(block)).toString();
+            self.chain.push(block);
+
+            self.validateChain()
+                .then(errorLog => {
+                    if (errorLog.length > 0) {
+                        self.chain.pop();
+                        reject(errorLog);
+                    } else {
+                        resolve(block);
+                    }
+                });
         });
     }
 
@@ -78,7 +97,9 @@ class Blockchain {
      */
     requestMessageOwnershipVerification(address) {
         return new Promise((resolve) => {
-            
+            const time = Time.now();
+            const message = `${address}:${time}:starRegistry`;
+            resolve(message);
         });
     }
 
@@ -101,8 +122,28 @@ class Blockchain {
      */
     submitStar(address, message, signature, star) {
         let self = this;
-        return new Promise(async (resolve, reject) => {
-            
+        return new Promise((resolve, reject) => {
+            let messageTime = parseInt(message.split(':'));
+           let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
+
+            if (currentTime - messageTime < 5 * 60) {
+                let verified =  bitcoinMessage.verify(message, address, signature);
+                if (verified) {
+                    const block = new Block({
+                        owner: address,
+                        message,
+                        signature,
+                        star
+                    });
+                    self._addBlock(block)
+                        .then(block => resolve(block))
+                        .catch(error => reject(error));
+                } else {
+                    reject('Signature is invalid');
+                }
+            } else {
+                reject('Exceeded validation time of 5 minutes');
+            }
         });
     }
 
@@ -114,8 +155,9 @@ class Blockchain {
      */
     getBlockByHash(hash) {
         let self = this;
-        return new Promise((resolve, reject) => {
-           
+        return new Promise((resolve,reject) => {
+           const [block] = self.chain.filter(block => block.hash === hash);
+           resolve(block);
         });
     }
 
@@ -144,9 +186,17 @@ class Blockchain {
      */
     getStarsByWalletAddress (address) {
         let self = this;
-        let stars = [];
+        let stars=[];
         return new Promise((resolve, reject) => {
-            
+            Promise.all(self.chain.map(block => block.getBData()))
+                .then((decodedBlocks) => {
+                    stars = decodedBlocks
+                        .filter(block => block && block.owner === address)
+                        .map(block => block.star);
+
+                    resolve(stars);
+                })
+                .catch(error => reject(error));
         });
     }
 
@@ -159,8 +209,32 @@ class Blockchain {
     validateChain() {
         let self = this;
         let errorLog = [];
-        return new Promise(async (resolve, reject) => {
-            
+        return new Promise((resolve) => {
+            let validatePromises = [];
+            self.chain.forEach((block, index) => {
+                if (block.height > 0) {
+                    const previousBlock = self.chain[index - 1];
+                    if (block.previousBlockHash !== previousBlock.hash) {
+                        const errorMessage = `Block ${index} previousBlockHash set to ${block.previousBlockHash}, but actual previous block hash was ${previousBlock.hash}`;
+                        errorLog.push(errorMessage);
+                    }
+                }
+
+                validatePromises.push(block.validate());
+            });
+
+            Promise.all(validatePromises)
+                .then(validatedBlocks => {
+                    validatedBlocks.forEach((valid, index) => {
+                        if (!valid) {
+                            const invalidBlock = self.chain[index];
+                            const errorMessage = `Block ${index} hash (${invalidBlock.hash}) is invalid`;
+                            errorLog.push(errorMessage);
+                        }
+                    });
+
+                    resolve(errorLog);
+                });
         });
     }
 

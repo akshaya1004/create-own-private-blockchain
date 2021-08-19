@@ -15,7 +15,7 @@ const hex2ascii = require('hex2ascii');
 class Block {
 
 
-    
+
 
     // Constructor - argument data will be the object containing the transaction data
 	constructor(data){
@@ -49,6 +49,14 @@ class Block {
             
             // Returning the Block is valid
 
+            const existingHash = self.hash;
+
+            self.hash = null;
+            const expectedHash = SHA256(JSON.stringify(self)).toString();
+            self.hash = existingHash;
+
+            resolve(expectedHash === existingHash);
+
         });
     }
 
@@ -67,6 +75,16 @@ class Block {
         // Parse the data to an object to be retrieve.
 
         // Resolve with the data if the object isn't the Genesis block
+
+        let self = this;
+        return new Promise((resolve) => {
+            if (self.height === 0) {
+                resolve(null);
+            } else {
+                const json = JSON.parse(hex2ascii(this.body));
+                resolve(json);
+            }
+        });
 
     }
 

@@ -123,7 +123,7 @@ class Blockchain {
     submitStar(address, message, signature, star) {
         let self = this;
         return new Promise((resolve, reject) => {
-            let messageTime = parseInt(message.split(':'));
+            let messageTime = parseInt(message.split(':')[1]);
            let currentTime = parseInt(new Date().getTime().toString().slice(0, -3));
 
             if (currentTime - messageTime < 5 * 60) {

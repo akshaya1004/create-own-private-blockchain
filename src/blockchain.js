@@ -131,17 +131,16 @@ class Blockchain {
                 let verified =  bitcoinMessage.verify(message, address, signature);
                 if (verified) {
                     const block = new BlockClass.Block({
-                        "owner": address,
-                        "message": message,
-                        "signature": signature,
-                        "star": star
+                        data: star,
+                        owner:address
                     });
-                    console.log("submit star add the block")
                     self._addBlock(block)
-                    console.log("resolve block")
-
-                        .then(block => resolve(block))
-                        .catch(error => reject(error));
+                        .then(function(blockresolved){
+                        resolve(blockresolved);
+                        })
+                        .catch(function(error){
+                                reject("Error Adding Block")
+                        });
                 } else {
                     reject('Signature is invalid');
                 }

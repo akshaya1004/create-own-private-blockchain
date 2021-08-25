@@ -131,8 +131,10 @@ class Blockchain {
                 let verified =  bitcoinMessage.verify(message, address, signature);
                 if (verified) {
                     const block = new BlockClass.Block({
-                        data: star,
-                        owner:address
+                        "owner": address,
+                        "message": message,
+                        "signature": signature,
+                        "star": star
                     });
                     console.log("submit star add the block")
                     self._addBlock(block)

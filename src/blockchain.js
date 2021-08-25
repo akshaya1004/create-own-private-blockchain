@@ -74,6 +74,7 @@ class Blockchain {
 
             block.hash = SHA256(JSON.stringify(block)).toString();
             self.chain.push(block);
+            self.height+=1
 
             self.validateChain()
                 .then(errorLog => {
@@ -129,13 +130,14 @@ class Blockchain {
             if (currentTime - messageTime < 5 * 60) {
                 let verified =  bitcoinMessage.verify(message, address, signature);
                 if (verified) {
-                    const block = new Block({
-                        owner: address,
-                        message,
-                        signature,
-                        star
+                    const block = new BlockClass.Block({
+                        data: star,
+                        owner:address
                     });
+                    console.log("submit star add the block")
                     self._addBlock(block)
+                    console.log("resolve block")
+
                         .then(block => resolve(block))
                         .catch(error => reject(error));
                 } else {

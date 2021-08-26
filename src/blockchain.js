@@ -195,8 +195,6 @@ class Blockchain {
                 .then((decodedBlocks) => {
                     stars = decodedBlocks
                         .filter(block => block && block.owner === address)
-                        .map(block => block.star);
-
                     resolve(stars);
                 })
                 .catch(error => reject(error));
